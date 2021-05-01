@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+import functools as f
+import json
+#import multiprocessing as mp
+#import numba as n
+import os
+import sys
+
+def rlistdir(dir):
+    files = []
+    for f in os.listdir(dir):
+        f = dir+'/'+f
+        if os.path.isdir(f):
+            files.extend(rlistdir(f))
+        else:
+            files.append(f)
+    return files
+
+def get_lang(file, langs):
+    ext = os.path.splitext(file)[1].lower()
+    types = [v for k,v in langs['by_ext'] if k == ext]
+    return types[0] if len(types) > 0 else 'Unknown'
+
+def count(file):
+    #TODO
+    return -1
+
+if __name__ == '__main__':
+    langs = json.load(open('langs.json'))
+    files = rlistdir('.')
+    loc_counts = map(lambda f: [get_lang(f, langs), count], files)
+    print(loc_counts)
