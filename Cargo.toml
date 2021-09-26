@@ -1,0 +1,9 @@
+[package]
+name = "floc"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+json = "0.12.4"
+ignore = "0.4.18"
+lazy_static = "1.4.0"
