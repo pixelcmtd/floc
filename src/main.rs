@@ -25,13 +25,34 @@ fn derive_type(file: &Path, contents: &String, by_ext: &JVal, by_file: &JVal, by
     return None;
 }
 
+fn files_to_json(files: &Vec<(String, usize, String)>) -> JVal {
+    let mut j = JVal::new_object();
+    for file in files {
+        j[file.0.as_str()] = json::object! {
+            "lines" => file.1,
+            "type" => file.2.as_str(),
+        };
+    }
+    return j;
+}
+
 fn main() {
     let mut json = false;
+    let mut by_file = false;
+    let mut dirs = Vec::new();
     for arg in env::args() {
         if arg == "--json" {
             json = !json;
+        } else if arg == "--by-file" {
+            by_file = !by_file;
+        } else {
+            dirs.push(arg);
         }
     }
+    if dirs.len() == 0 {
+        dirs.push(String::from("."));
+    }
+    // TODO: use dirs
     let by_ext = &LANGS["by_ext"];
     let by_file = &LANGS["by_file"];
     let by_shebang = &LANGS["by_shebang"];
@@ -54,7 +75,7 @@ fn main() {
     if json {
         // TODO: "header"
         // TODO: cloc compatibility
-        // TODO: implement
+        println!("{}", files_to_json(&files).dump());
     } else {
         // TODO: support the table
         panic!("this is not supported at the moment");
