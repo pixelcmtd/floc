@@ -1,4 +1,4 @@
-// TODO: multi-threading
+// TODO: multi-threading (maybe through ParallelWalk)
 
 use ignore::Walk;
 use json;
@@ -53,7 +53,8 @@ fn main() {
     let mut json = false;
     let mut by_file = false;
     let mut dirs = Vec::new();
-    for arg in env::args() {
+    for arg in env::args().skip(1) {
+        // TODO: yaml, short options
         if arg == "--json" {
             json = !json;
         } else if arg == "--by-file" {
