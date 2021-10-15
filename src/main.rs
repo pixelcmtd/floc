@@ -29,6 +29,7 @@ fn derive_type(
     {
         return ty.as_str().map(String::from);
     } else if let Some(ty) = contents.split("\n").next().and_then(|e| {
+        // TODO: check if this works (it doesnt seem to)
         e.split(" ")
             .next()
             .and_then(|e| e.split("/").last().map(|e| &by_shebang[e]))
@@ -66,13 +67,17 @@ fn main() {
     if dirs.len() == 0 {
         dirs.push(String::from("."));
     }
-    // TODO: use dirs
     let by_ext = &LANGS["by_ext"];
     let by_file = &LANGS["by_file"];
     let by_shebang = &LANGS["by_shebang"];
-    let raw_files = Walk::new(".")
-        .filter_map(Result::ok)
-        .filter(|e| e.file_type().unwrap().is_file());
+    let raw_files = dirs
+        .into_iter()
+        .map(Walk::new)
+        .map(|walk| {
+            walk.filter_map(Result::ok)
+                .filter(|e| e.file_type().unwrap().is_file())
+        })
+        .flatten();
     let files: Vec<(String, usize, String)> = raw_files
         .map(|raw_file| {
             let contents = match read_to_string(raw_file.path()) {
