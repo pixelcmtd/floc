@@ -1,6 +1,6 @@
 // TODO: multi-threading (maybe through ParallelWalk)
 
-use clap::Clap;
+use clap::Parser;
 use ignore::Walk;
 use json;
 use lazy_static::lazy_static;
@@ -17,7 +17,7 @@ lazy_static! {
     static ref BY_SHEBANG: &'static JVal = &LANGS_RAW["by_shebang"];
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 #[clap(name = "floc")]
 struct Opt {
     #[clap(long)]

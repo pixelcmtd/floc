@@ -7,4 +7,4 @@ edition = "2018"
 json = "0.12.4"
 ignore = "0.4.18"
 lazy_static = "1.4.0"
-clap = "3.0.0-beta.4"
+clap = { git = "https://github.com/clap-rs/clap.git" }
