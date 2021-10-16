@@ -1,9 +1,9 @@
 // TODO: multi-threading (maybe through ParallelWalk)
 
+use clap::Clap;
 use ignore::Walk;
 use json;
 use lazy_static::lazy_static;
-use std::env;
 use std::ffi::OsStr;
 use std::fs::read_to_string;
 use std::path::Path;
@@ -11,28 +11,39 @@ use std::path::Path;
 type JVal = json::JsonValue;
 
 lazy_static! {
-    static ref LANGS: JVal = json::parse(include_str!("langs.json")).unwrap();
+    static ref LANGS_RAW: JVal = json::parse(include_str!("langs.json")).unwrap();
+    static ref BY_EXT: &'static JVal = &LANGS_RAW["by_ext"];
+    static ref BY_FILE: &'static JVal = &LANGS_RAW["by_file"];
+    static ref BY_SHEBANG: &'static JVal = &LANGS_RAW["by_shebang"];
 }
 
-fn derive_type(
-    file: &Path,
-    contents: &String,
-    by_ext: &JVal,
-    by_file: &JVal,
-    by_shebang: &JVal,
-) -> Option<String> {
-    if let Some(ty) = file.extension().and_then(OsStr::to_str).map(|e| &by_ext[e]) {
+#[derive(Clap)]
+#[clap(name = "floc")]
+struct Opt {
+    #[clap(long)]
+    json: bool,
+
+    #[clap(long)]
+    by_file: bool,
+
+    // TODO: yaml, short options
+    #[clap(name = "DIR", default_value = ".")]
+    dirs: Vec<String>,
+}
+
+fn derive_type(file: &Path, contents: &String) -> Option<String> {
+    if let Some(ty) = file.extension().and_then(OsStr::to_str).map(|e| &BY_EXT[e]) {
         return ty.as_str().map(String::from);
     } else if let Some(ty) = Path::file_name(file)
         .and_then(|e| e.to_str())
-        .map(|e| &by_file[e])
+        .map(|e| &BY_FILE[e])
     {
         return ty.as_str().map(String::from);
     } else if let Some(ty) = contents.split("\n").next().and_then(|e| {
         // TODO: check if this works (it doesnt seem to)
         e.split(" ")
             .next()
-            .and_then(|e| e.split("/").last().map(|e| &by_shebang[e]))
+            .and_then(|e| e.split("/").last().map(|e| &BY_SHEBANG[e]))
     }) {
         return ty.as_str().map(String::from);
     }
@@ -51,26 +62,9 @@ fn files_to_json(files: &Vec<(String, usize, String)>) -> JVal {
 }
 
 fn main() {
-    let mut json = false;
-    let mut by_file = false;
-    let mut dirs = Vec::new();
-    for arg in env::args().skip(1) {
-        // TODO: yaml, short options
-        if arg == "--json" {
-            json = !json;
-        } else if arg == "--by-file" {
-            by_file = !by_file;
-        } else {
-            dirs.push(arg);
-        }
-    }
-    if dirs.len() == 0 {
-        dirs.push(String::from("."));
-    }
-    let by_ext = &LANGS["by_ext"];
-    let by_file = &LANGS["by_file"];
-    let by_shebang = &LANGS["by_shebang"];
-    let raw_files = dirs
+    let config = Opt::parse();
+    let raw_files = config
+        .dirs
         .into_iter()
         .map(Walk::new)
         .map(|walk| {
@@ -87,7 +81,7 @@ fn main() {
             let path = String::from(raw_file.path().to_str().unwrap());
             // TODO: make sense
             let len = contents.lines().count();
-            if let Some(ty) = derive_type(raw_file.path(), &contents, by_ext, by_file, by_shebang) {
+            if let Some(ty) = derive_type(raw_file.path(), &contents) {
                 return Some((path, len, ty));
             }
             return None;
@@ -95,8 +89,7 @@ fn main() {
         .filter(|e| e.is_some())
         .map(|e| e.unwrap())
         .collect();
-    json = true;
-    if json {
+    if config.json || true {
         // TODO: "header"
         // TODO: cloc compatibility
         println!("{}", files_to_json(&files).dump());
