@@ -1,9 +1,10 @@
-// TODO: multi-threading (maybe through ParallelWalk)
+// TODO: more multi-threading
 
 use clap::Parser;
 use ignore::Walk;
 use json;
 use lazy_static::lazy_static;
+use rayon::iter::*;
 use std::ffi::OsStr;
 use std::fs::read_to_string;
 use std::path::Path;
@@ -73,6 +74,7 @@ fn main() {
         })
         .flatten();
     let files: Vec<(String, usize, String)> = raw_files
+        .par_bridge()
         .map(|raw_file| {
             let contents = match read_to_string(raw_file.path()) {
                 Ok(s) => s,

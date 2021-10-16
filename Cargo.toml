@@ -8,3 +8,4 @@ json = "0.12.4"
 ignore = "0.4.18"
 lazy_static = "1.4.0"
 clap = { git = "https://github.com/clap-rs/clap.git" }
+rayon = "1.5.1"
