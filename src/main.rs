@@ -1,5 +1,3 @@
-// TODO: more multi-threading
-
 use clap::Parser;
 use ignore::Walk;
 use json;

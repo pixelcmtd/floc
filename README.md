@@ -2,4 +2,4 @@
 
 # floc
 
-A reimplementation of `cloc` in Rust.
+A partial reimplementation of `cloc` in Rust.
