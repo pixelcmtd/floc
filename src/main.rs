@@ -59,7 +59,7 @@ fn files_to_json(files: &Vec<(String, usize, String)>) -> JVal {
             "type" => file.2.as_str(),
         };
     }
-    return j;
+    j
 }
 
 fn main() {
@@ -76,17 +76,11 @@ fn main() {
     let files: Vec<(String, usize, String)> = raw_files
         .par_bridge()
         .map(|raw_file| {
-            let contents = match read_to_string(raw_file.path()) {
-                Ok(s) => s,
-                Err(_) => return None,
-            };
+            let contents = read_to_string(raw_file.path()).ok()?;
             let path = String::from(raw_file.path().to_str().unwrap());
             // TODO: make sense
             let len = contents.lines().count();
-            if let Some(ty) = derive_type(raw_file.path(), &contents) {
-                return Some((path, len, ty));
-            }
-            return None;
+            derive_type(raw_file.path(), &contents).map(|ty| (path, len, ty))
         })
         .filter(|e| e.is_some())
         .map(|e| e.unwrap())
