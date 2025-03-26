@@ -32,23 +32,33 @@ struct Opt {
     dirs: Vec<String>,
 }
 
-fn derive_type(file: &Path, contents: &String) -> Option<String> {
-    if let Some(ty) = file.extension().and_then(OsStr::to_str).map(|e| &BY_EXT[e]) {
-        return ty.as_str().map(String::from);
-    } else if let Some(ty) = Path::file_name(file)
+fn ext_type(file: &Path) -> Option<String> {
+    file.extension()
+        .and_then(OsStr::to_str)
+        .map(|e| BY_EXT[e].as_str().map(String::from))?
+}
+
+fn file_type(file: &Path) -> Option<String> {
+    Path::file_name(file)
         .and_then(|e| e.to_str())
-        .map(|e| &BY_FILE[e])
-    {
-        return ty.as_str().map(String::from);
-    } else if let Some(ty) = contents.split("\n").next().and_then(|e| {
-        // TODO: check if this works (it doesnt seem to)
+        .map(|e| BY_FILE[e].as_str().map(String::from))?
+}
+
+fn shebang_type(contents: &String) -> Option<String> {
+    contents.split("\n").next().and_then(|e| {
         e.split(" ")
-            .next()
-            .and_then(|e| e.split("/").last().map(|e| &BY_SHEBANG[e]))
-    }) {
-        return ty.as_str().map(String::from);
-    }
-    return None;
+            .map(|e| e.split("/").last().map(|e| &BY_SHEBANG[e]))
+            .flatten()
+            .last()?
+            .as_str()
+            .map(String::from)
+    })
+}
+
+fn derive_type(file: &Path, contents: &String) -> Option<String> {
+    ext_type(file)
+        .or_else(|| file_type(file))
+        .or_else(|| shebang_type(contents))
 }
 
 fn files_to_json(files: &Vec<(String, usize, String)>) -> JVal {
